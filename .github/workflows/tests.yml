@@ -31,7 +31,7 @@ jobs:
       - name: Build Artifact
         run: | 
          mkdir build
-         cp app.py requirements.txt build/
+         cp app1.py requirements.txt build/
          tar -czf app.tar.gz build/
 
       - name: Upload Artifact
