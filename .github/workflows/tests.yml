@@ -1,78 +1,4 @@
-# name: CI Pipeline
-
-# on:
-#   push:
-#     branches: ["main"]
-#   pull_request:
-#     branches: ["main"]
-
-# jobs:
-#   test:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
-
-#       - name: Set up Python
-#         uses: actions/setup-python@v5
-#         with:
-#           python-version: "3.10"
-
-#       - name: Install dependencies
-#         run: |
-#           python -m pip install --upgrade pip
-#           pip install -r requirements.txt
-
-#       - name: Run tests
-#         run: |
-#           pytest
-
-#       - name: Build Artifact
-#         run: | 
-#          mkdir build
-#          cp app1.py requirements.txt build/
-#          tar -czf app.tar.gz build/
-
-#       - name: Upload Artifact
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: app-artifact
-#           path: app.tar.gz
-
-# deploy-dev:
-#   runs-on: ubuntu-latest
-#   environment: dev
-#   steps:
-#     - uses: actions/download-artifact@v4
-#       with:
-#        name: app-artifact-flask
-
-#     - name: Deploy to DEV
-#       run: | 
-# 	echo "Deploying to DEV"
-# 	mkdir dev-release
-# 	tar -xzf flask-app.tar.gz -C dev-release
-
-# deploy-prod:
-#   runs-on: ubuntu-latest
-#   needs: deploy-dev
-#   environment: prod
-#   steps:
-#     - uses: actions/download-artifact@v4
-#       with: 
-# 	name: app-artifact-flask
-
-#     - name: Deploy to PROD
-#       run: |
-# 	echo "Deploying to PROD"
-	
-
-
-
-
-
-name: CI Pipeline
+name: Python CI-CD with Package Job
 
 on:
   push:
@@ -99,10 +25,17 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run tests
-        run: |
-          pytest
+        run: pytest
 
-      - name: Build Artifact
+  package:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build package
         run: |
           mkdir build
           cp app1.py requirements.txt build/
@@ -116,16 +49,18 @@ jobs:
 
   deploy-dev:
     runs-on: ubuntu-latest
-    needs: test
+    needs: package
     environment: dev
+
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
         with:
           name: app-artifact
 
-      - name: Deploy to DEV
+      - name: Deploy to Dev
         run: |
-          echo "Deploying to DEV"
+          echo "Deploying to DEV server"
           mkdir dev-release
           tar -xzf app.tar.gz -C dev-release
 
@@ -133,14 +68,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-dev
     environment: prod
+
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
         with:
           name: app-artifact
 
       - name: Deploy to PROD
         run: |
-          echo "Deploying to PROD"
-
-
-          
+          echo "Deploying to PRODUCTION server"
+          mkdir prod-release
+          tar -xzf app.tar.gz -C prod-release
